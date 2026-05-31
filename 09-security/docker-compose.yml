@@ -1,0 +1,129 @@
+x-ceos-base: &ceos-base
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 1G
+      reservations:
+        memory: 512M
+
+services:
+  ceos-1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-1.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.11
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ceos-2:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-2.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.12
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ceos-3:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-3
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-3.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.13
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ceos-4:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-4
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-4.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.14
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  rust-host:
+    image: rust:latest
+    container_name: rust-host
+    working_dir: /app
+    volumes:
+      - ./automation:/app
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.50
+    command: ["sleep", "infinity"]
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  mgmt-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.99.0.0/24

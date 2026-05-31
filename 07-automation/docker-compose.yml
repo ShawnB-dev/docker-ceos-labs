@@ -1,0 +1,79 @@
+x-ceos-base: &ceos-base
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 1G
+      reservations:
+        memory: 512M
+
+services:
+  leaf-1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: leaf-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf-1.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.21
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  leaf-2:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: leaf-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf-2.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.22
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  rust-automation:
+    container_name: rust-automation
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lab07-automation:latest
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.50
+    depends_on:
+      leaf-1:
+        condition: service_healthy
+      leaf-2:
+        condition: service_healthy
+
+networks:
+  mgmt-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.99.0.0/24

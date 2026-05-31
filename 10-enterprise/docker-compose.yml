@@ -1,0 +1,412 @@
+x-ceos-base: &ceos-base
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 1G
+      reservations:
+        memory: 512M
+
+services:
+  # =========================
+  # Core EVPN Fabric
+  # =========================
+  spine-1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: spine-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/spine-1.cfg
+    volumes:
+      - ./configs/core:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.11
+
+  spine-2:
+    image: ceos:4.36.0.1F
+    container_name: spine-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/spine-2.cfg
+    volumes:
+      - ./configs/core:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.12
+
+  leaf-1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: leaf-1
+    depends_on:
+      spine-1:
+        condition: service_healthy
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf-1.cfg
+    volumes:
+      - ./configs/core:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.21
+
+  leaf-2:
+    image: ceos:4.36.0.1F
+    container_name: leaf-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf-2.cfg
+    volumes:
+      - ./configs/core:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.22
+
+  leaf-3:
+    image: ceos:4.36.0.1F
+    container_name: leaf-3
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf-3.cfg
+    volumes:
+      - ./configs/core:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.23
+
+  leaf-4:
+    image: ceos:4.36.0.1F
+    container_name: leaf-4
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf-4.cfg
+    volumes:
+      - ./configs/core:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.24
+
+  # =========================
+  # Distribution Layer
+  # =========================
+  dist-1:
+    image: ceos:4.36.0.1F
+    container_name: dist-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/dist-1.cfg
+    volumes:
+      - ./configs/distribution:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.31
+
+  dist-2:
+    image: ceos:4.36.0.1F
+    container_name: dist-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/dist-2.cfg
+    volumes:
+      - ./configs/distribution:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.32
+
+  # =========================
+  # Access Layer
+  # =========================
+  access-1:
+    image: ceos:4.36.0.1F
+    container_name: access-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/access-1.cfg
+    volumes:
+      - ./configs/access:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.41
+
+  access-2:
+    image: ceos:4.36.0.1F
+    container_name: access-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/access-2.cfg
+    volumes:
+      - ./configs/access:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.42
+      lan-net:
+        ipv4_address: 172.16.100.42
+
+  access-3:
+    image: ceos:4.36.0.1F
+    container_name: access-3
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/access-3.cfg
+    volumes:
+      - ./configs/access:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.43
+      lan-net:
+        ipv4_address: 172.16.100.43
+
+
+  access-4:
+    image: ceos:4.36.0.1F
+    container_name: access-4
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/access-4.cfg
+    volumes:
+      - ./configs/access:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.44
+      lan-net:
+        ipv4_address: 172.16.100.44
+
+  # =========================
+  # WAN / DMZ / Branch / Firewall
+  # =========================
+  wan-edge:
+    image: ceos:4.36.0.1F
+    container_name: wan-edge
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/wan-edge.cfg
+    volumes:
+      - ./configs/wan:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.60
+      wan-net:
+        ipv4_address: 203.0.113.1
+      branch1-wan:
+        ipv4_address: 172.31.1.1
+      branch2-wan:
+        ipv4_address: 172.31.2.1
+
+  frr-fw:
+    build:
+      context: ./firewall
+      dockerfile: Dockerfile
+    container_name: frr-fw
+    privileged: true
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.2
+      dmz-net:
+        ipv4_address: 192.168.254.2
+      wan-net:
+        ipv4_address: 203.0.113.2
+      lan-net:
+        ipv4_address: 172.16.100.2
+      dmz-srv-net:
+        ipv4_address: 172.16.102.1
+      dmz-srv-net2:
+        ipv4_address: 172.16.101.1
+    volumes:
+      - ./configs/dmz/frr.conf:/etc/frr/frr.conf
+      - ./configs/dmz/nftables.conf:/etc/nftables.conf
+    restart: unless-stopped
+
+  dmz-srv1:
+    image: alpine:latest
+    container_name: dmz-srv1
+    command: ["sh", "-c", "ip addr add 172.16.102.10/24 dev eth0 && ip route add default via 172.16.102.1 && sleep infinity"]
+    networks:
+      dmz-srv-net:
+        ipv4_address: 172.16.102.10
+
+  dmz-srv2:
+    image: alpine:latest
+    container_name: dmz-srv2
+    command: ["sh", "-c", "ip addr add 172.16.101.10/24 dev eth0 && ip route add default via 172.16.101.1 && sleep infinity"]
+    networks:
+      dmz-srv-net2:
+        ipv4_address: 172.16.101.10
+
+  branch-1:
+    image: ceos:4.36.0.1F
+    container_name: branch-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/branch-1.cfg
+    volumes:
+      - ./configs/wan:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.61
+      branch1-wan:
+        ipv4_address: 172.31.1.2
+        
+  branch-2:
+    image: ceos:4.36.0.1F
+    container_name: branch-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/branch-2.cfg
+    volumes:
+      - ./configs/wan:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.62
+      branch2-wan:
+        ipv4_address: 172.31.2.2
+
+  # =========================
+  # Automation / Telemetry Host
+  # =========================
+  rust-host:
+    image: rust:latest
+    build:
+      context: ./rust-host-syslog
+      dockerfile: Dockerfile
+    container_name: rust-host
+    working_dir: /app
+    volumes:
+      - ./automation:/app
+      - ./configs/syslog/syslog-ng.conf:/etc/syslog-ng/syslog-ng.conf:ro
+      - ./logs/syslog:/var/log/syslog # Persistent storage for logs
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.50
+    ports:
+      - "514:514/udp" # Expose UDP syslog port
+    # Command is now handled by the Dockerfile's ENTRYPOINT
+
+networks:
+  mgmt-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.99.0.0/24
+
+  lan-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.100.0/24
+
+
+  wan-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 203.0.113.0/24
+          gateway: 203.0.113.254
+
+  dmz-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.254.0/24
+
+  dmz-srv-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.102.0/24
+
+  dmz-srv-net2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.101.0/24
+
+  branch1-wan:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.1.0/30
+
+  branch2-wan:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.2.0/30
+
+  

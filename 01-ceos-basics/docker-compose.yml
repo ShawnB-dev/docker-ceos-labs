@@ -1,0 +1,86 @@
+version: "3.9"
+
+x-ceos-base: &ceos-base
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 1G
+      reservations:
+        memory: 512M
+
+services:
+  ceos-1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-1.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.11
+      data-net:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  host-a:
+    image: alpine:latest
+    container_name: host-a
+    command: >
+      sh -c "ip addr flush dev eth0 &&
+             ip addr add 192.168.10.10/24 dev eth0 &&
+             ip route add default via 192.168.10.1 &&
+             sleep infinity"
+    networks:
+      data-net:
+
+  host-b:
+    image: alpine:latest
+    container_name: host-b
+    command: >
+      sh -c "ip addr flush dev eth0 &&
+             ip addr add 192.168.10.11/24 dev eth0 &&
+             ip route add default via 192.168.10.1 &&
+             sleep infinity"
+    networks:
+      data-net:
+
+  rust-toolkit:
+    image: rust:latest
+    container_name: rust-toolkit
+    working_dir: /tools
+    volumes:
+      - ../rust-toolkit:/tools
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.50
+      data-net:
+    command: >
+      sh -c "ip addr add 192.168.20.10/24 dev eth1 &&
+             ip route add default via 192.168.20.1 &&
+             sleep infinity"
+
+networks:
+  mgmt-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.99.0.0/24
+
+  data-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/24

@@ -1,0 +1,142 @@
+version: "3.9"
+
+x-ceos-base: &ceos-base
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 1G
+      reservations:
+        memory: 512M
+
+services:
+  ceos-1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-1.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.21
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"] # Check if PID 1 (FastCli) is alive
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s # cEOS takes longer to boot
+
+  ceos-2:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-2.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.22
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"] # Check if PID 1 (FastCli) is alive
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s # cEOS takes longer to boot
+
+  ceos-3:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-3
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-3.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.23
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  ceos-4:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-4
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-4.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.24
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  rust-telemetry:
+    build:
+      context: ./rust-telemetry
+      dockerfile: ../Dockerfile
+    image: rust-telemetry:latest
+    container_name: rust-telemetry
+    working_dir: /app
+    volumes:
+      - ./rust-telemetry:/app
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.50
+    depends_on:
+      ceos-1:
+        condition: service_healthy
+      ceos-2:
+        condition: service_healthy
+      ceos-3:
+        condition: service_healthy
+      ceos-4:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  mgmt-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.99.0.0/24

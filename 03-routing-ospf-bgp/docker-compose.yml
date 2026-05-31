@@ -1,0 +1,153 @@
+version: "3.9"
+
+x-ceos-base: &ceos-base
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 1G
+      reservations:
+        memory: 512M
+
+services:
+  ceos-1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-1.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.11
+      ceos1-ceos2:
+      ceos3-ceos1:
+      ceos1-edge:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ceos-2:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-2.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.12
+      ceos1-ceos2:
+      ceos2-ceos3:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ceos-3:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: ceos-3
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/ceos-3.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.13
+      ceos2-ceos3:
+      ceos3-ceos1:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  edge:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: edge
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/edge.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.14
+      ceos1-edge:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  rust-toolkit:
+    image: rust:latest
+    container_name: rust-toolkit
+    working_dir: /tools
+    volumes:
+      - ../rust-toolkit:/tools
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.50
+    command: ["sleep", "infinity"]
+
+networks:
+  mgmt-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.99.0.0/24
+  ceos1-ceos2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.12.0/30
+  ceos2-ceos3:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.23.0/30
+  ceos3-ceos1:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.31.0/30
+  ceos1-edge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.14.0/30

@@ -1,0 +1,63 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Validate Docker Compose Topography
+        run: |
+          chmod +x validate_all_labs.sh
+          ./validate_all_labs.sh
+
+      - name: Build & Test Lab 06 (Integration Runner)
+        working-directory: 06-rust-integration
+        run: |
+          cargo fmt --check
+          cargo clippy -- -D warnings
+          cargo build --verbose
+          cargo test --verbose
+
+      - name: Build & Test Lab 07 (Automation)
+        working-directory: 07-automation
+        run: |
+          cargo fmt --check
+          cargo clippy -- -D warnings
+          cargo build --verbose
+          cargo test --verbose
+
+      - name: Build & Test Lab 08 (Telemetry)
+        working-directory: 08-telemetry
+        run: |
+          cargo fmt --check
+          cargo clippy -- -D warnings
+          cargo build --verbose
+          cargo test --verbose
+
+      - name: Build & Test Lab 10 (Log Parser)
+        working-directory: 10-enterprise/automation
+        run: |
+          cargo fmt --check
+          cargo clippy -- -D warnings
+          cargo build --verbose
+          cargo test --verbose

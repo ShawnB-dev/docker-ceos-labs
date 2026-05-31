@@ -1,0 +1,238 @@
+version: "3.9"
+
+x-ceos-base: &ceos-base
+  deploy:
+    resources:
+      limits:
+        cpus: '0.5'
+        memory: 1G
+      reservations:
+        memory: 512M
+
+services:
+  spine1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: spine1
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/spine1.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.11
+      spine1-leaf1:
+      spine1-leaf2:
+      spine1-leaf3:
+      spine1-leaf4:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  spine2:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: spine2
+    privileged: true
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/spine2.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.12
+      spine2-leaf1:
+      spine2-leaf2:
+      spine2-leaf3:
+      spine2-leaf4:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  leaf1:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: leaf1
+    privileged: true
+    depends_on:
+      spine1:
+        condition: service_healthy
+      spine2:
+        condition: service_healthy
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf1.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.21
+      spine1-leaf1:
+      spine2-leaf1:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  leaf2:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: leaf2
+    privileged: true
+    depends_on:
+      spine1:
+        condition: service_healthy
+      spine2:
+        condition: service_healthy
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf2.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.22
+      spine1-leaf2:
+      spine2-leaf2:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  leaf3:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: leaf3
+    privileged: true
+    depends_on:
+      spine1:
+        condition: service_healthy
+      spine2:
+        condition: service_healthy
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf3.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.23
+      spine1-leaf3:
+      spine2-leaf3:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  leaf4:
+    <<: *ceos-base
+    image: ceos:4.36.0.1F
+    container_name: leaf4
+    privileged: true
+    depends_on:
+      spine1:
+        condition: service_healthy
+      spine2:
+        condition: service_healthy
+    environment:
+      - CEOS=1
+      - EOS_PLATFORM=ceoslab
+      - MGMT_INTF=Management1
+      - INTFTYPE=eth
+      - SKIP_ZEROTOUCH_BYPASS=1
+      - EOS_CONFIG_FILE=/mnt/flash/leaf4.cfg
+    volumes:
+      - ./configs:/mnt/flash
+    networks:
+      mgmt-net:
+        ipv4_address: 10.99.0.24
+      spine1-leaf4:
+      spine2-leaf4:
+    healthcheck:
+      test: ["CMD", "sh", "-c", "kill -0 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  mgmt-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.99.0.0/24
+  spine1-leaf1:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.0/31
+  spine1-leaf2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.2.0/31
+  spine1-leaf3:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.3.0/31
+  spine1-leaf4:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.4.0/31
+  spine2-leaf1:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.2/31
+  spine2-leaf2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.2.2/31
+  spine2-leaf3:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.3.2/31
+  spine2-leaf4:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.4.2/31

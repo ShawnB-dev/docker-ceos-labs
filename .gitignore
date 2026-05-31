@@ -1,0 +1,18 @@
+# Docker
+.docker/
+*.tar
+*.tar.gz
+
+# cEOS / Arista Specifics
+*.swp
+*.log
+flash/
+
+# Rust / Build Artifacts
+/target
+Cargo.lock
+**/*.rs.bk
+
+# IDEs
+.vscode/
+.idea/
